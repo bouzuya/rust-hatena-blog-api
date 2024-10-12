@@ -2,16 +2,19 @@
 name = "hatena-blog-api"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+publish = false
 
 [dependencies]
 atom_syndication = "0.11.0"
 chrono = "0.4.19"
 quick-xml = "0.22.0"
-reqwest = "0.11.8"
+reqwest = { version = "0.11.8", default-features = false }
 thiserror = "1.0.30"
 
 [dev-dependencies]
 anyhow = "1.0.52"
 tokio = { version = "1.15.0", features = ["full"] }
+
+[features]
+native-tls = ["reqwest/native-tls"]
+rustls-tls = ["reqwest/rustls-tls"]
