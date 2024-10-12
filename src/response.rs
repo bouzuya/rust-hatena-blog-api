@@ -122,22 +122,22 @@ fn from_feed_xml(body: &str) -> Result<Feed, ParseEntry> {
 }
 
 fn categories_from_reader(
-    ns_buf: &mut Vec<u8>,
     reader: &mut Reader<&[u8]>,
     _attrs: Attributes,
 ) -> Result<Vec<String>, ParseCategoryError> {
     let mut categories = vec![];
     let mut buf = vec![];
     loop {
-        match reader.read_namespaced_event(&mut buf, ns_buf) {
+        match reader.read_event_into(&mut buf) {
             Ok(ns_event) => match ns_event {
-                (Some(b"http://www.w3.org/2005/Atom"), Event::Empty(ref e))
-                    if e.local_name() == b"category" =>
+                Event::Empty(ref e)
+                    if e.name().prefix().as_ref().map(|n| n.as_ref()) == Some(b"atom")
+                        && e.name().local_name().as_ref() == b"category" =>
                 {
                     for attr in e.attributes() {
                         let attr = attr.map_err(|_| ParseCategoryError)?;
-                        if attr.key == b"term" {
-                            let value = attr.unescaped_value().map_err(|_| ParseCategoryError)?;
+                        if attr.key.local_name().as_ref() == b"term" {
+                            let value = attr.value; // .map_err(|_| ParseCategoryError)?;
                             categories.push(
                                 String::from_utf8(value.to_vec())
                                     .map_err(|_| ParseCategoryError)?,
@@ -145,12 +145,13 @@ fn categories_from_reader(
                         }
                     }
                 }
-                (Some(b"http://www.w3.org/2007/app"), Event::End(ref e))
-                    if e.local_name() == b"categories" =>
+                Event::End(ref e)
+                    if e.name().prefix().as_ref().map(|n| n.as_ref()) == Some(b"app")
+                        && e.name().local_name().as_ref() == b"categories" =>
                 {
                     break
                 }
-                (_, Event::Eof) => {
+                Event::Eof => {
                     // TODO: eof
                     return Err(ParseCategoryError);
                 }
@@ -168,24 +169,20 @@ fn categories_from_reader(
 
 fn from_category_document_xml(xml: &str) -> Result<Vec<String>, ParseCategoryError> {
     let mut reader = Reader::from_str(xml);
-    reader.trim_text(true);
+    reader.config_mut().trim_text(true);
 
     let mut categories = None;
     let mut buf = vec![];
-    let mut ns_buf = vec![];
     loop {
-        match reader.read_namespaced_event(&mut buf, &mut ns_buf) {
-            Ok(ns_event) => match ns_event {
-                (Some(b"http://www.w3.org/2007/app"), Event::Start(ref e))
-                    if e.local_name() == b"categories" =>
+        match reader.read_event_into(&mut buf) {
+            Ok(event) => match event {
+                Event::Start(ref e)
+                    if e.name().prefix().as_ref().map(|n| n.as_ref()) == Some(b"app")
+                        && e.name().local_name().as_ref() == b"categories" =>
                 {
                     match categories {
                         None => {
-                            categories = Some(categories_from_reader(
-                                &mut ns_buf,
-                                &mut reader,
-                                e.attributes(),
-                            )?);
+                            categories = Some(categories_from_reader(&mut reader, e.attributes())?);
                         }
                         Some(_) => {
                             // TODO: too many <app:categories>
@@ -193,8 +190,9 @@ fn from_category_document_xml(xml: &str) -> Result<Vec<String>, ParseCategoryErr
                         }
                     }
                 }
-                (Some(b"http://www.w3.org/2007/app"), Event::Empty(ref e))
-                    if e.local_name() == b"categories" =>
+                Event::Empty(ref e)
+                    if e.name().prefix().as_ref().map(|n| n.as_ref()) == Some(b"app")
+                        && e.name().local_name().as_ref() == b"categories" =>
                 {
                     match categories {
                         None => {
@@ -207,8 +205,10 @@ fn from_category_document_xml(xml: &str) -> Result<Vec<String>, ParseCategoryErr
                         }
                     }
                 }
-                (_, Event::Eof) => break,
-                _ => {}
+                Event::Eof => break,
+                _ => {
+                    // do nothing
+                }
             },
             Err(_) => {
                 // TODO: unknown
@@ -533,7 +533,7 @@ mod tests {
                     "control".to_string(),
                     vec![Extension {
                         name: "app:control".to_string(),
-                        value: Some("".to_string()),
+                        value: None,
                         attrs: BTreeMap::new(),
                         children: {
                             let mut children = BTreeMap::new();
@@ -569,9 +569,9 @@ mod tests {
                         name: "hatena:formatted-content".to_string(),
                         value: Some("<div class=\"section\">\n    <h4>記事本文</h4>\n\n    <ul>\n    <li>リスト1</li>\n    <li>リスト2</li>\n    </ul><p>内容</p>\n    </div>".to_string()),
                         attrs: {
-                          let mut attrs =  BTreeMap::new();
+                          let mut attrs = BTreeMap::new();
+                          attrs.insert("hatena".to_string(), "http://www.hatena.ne.jp/info/xmlns#".to_string());
                           attrs.insert("type".to_string(), "text/html".to_string());
-                          attrs.insert("xmlns:hatena".to_string(), "http://www.hatena.ne.jp/info/xmlns#".to_string());
                           attrs
                         },
                         children: BTreeMap::new(),
