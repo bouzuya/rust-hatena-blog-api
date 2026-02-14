@@ -7,9 +7,9 @@ publish = false
 [dependencies]
 atom_syndication = "0.12"
 chrono = "0.4"
-quick-xml = "0.36"
-reqwest = { version = "0.12", default-features = false }
-thiserror = "1"
+quick-xml = "0.39"
+reqwest = { version = "0.13", default-features = false }
+thiserror = "2"
 
 [dev-dependencies]
 anyhow = "1"
@@ -18,4 +18,4 @@ tokio = { version = "1", features = ["full"] }
 
 [features]
 native-tls = ["reqwest/native-tls"]
-rustls-tls = ["reqwest/rustls-tls"]
+rustls-tls = ["reqwest/rustls"]
