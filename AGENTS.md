@@ -47,3 +47,7 @@ Key design decisions:
 - Error types use `thiserror` derive macros
 - Tests are inline (`#[cfg(test)] mod test`) within each module, not in a separate `tests/` directory
 - All public types are explicitly re-exported from `lib.rs` (do not use wildcard `*` re-exports)
+
+## Maintaining This File
+
+When making changes that affect conventions, architecture, or build/test commands described in this file, update AGENTS.md in the same changeset to keep it in sync.
