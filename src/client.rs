@@ -11,9 +11,10 @@ use reqwest::Method;
 use reqwest::StatusCode;
 use thiserror::Error;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct Client {
     config: Config,
+    http_client: reqwest::Client,
 }
 
 #[derive(Debug, Error)]
@@ -38,6 +39,7 @@ impl Client {
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
+            http_client: reqwest::Client::new(),
         }
     }
 
@@ -127,8 +129,8 @@ impl Client {
         body: Option<String>,
     ) -> Result<String, ClientError> {
         let config = &self.config;
-        let client = reqwest::Client::new();
-        let request = client
+        let request = self
+            .http_client
             .request(method, url)
             .basic_auth(&config.hatena_id, Some(&config.api_key));
         let request = if let Some(body) = body {
@@ -163,7 +165,8 @@ mod test {
     #[test]
     fn new() {
         let config = config();
-        assert_eq!(Client::new(&config), super::Client { config })
+        let client = Client::new(&config);
+        assert_eq!(client.config, config);
     }
 
     #[test]
