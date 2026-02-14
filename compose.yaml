@@ -1,0 +1,8 @@
+services:
+  workspace:
+    command: sleep infinity
+    image: debian:trixie
+    volumes:
+      - .:/workspaces/workspace:cached
+      - ~/.claude:/home/vscode/.claude
+      - ~/.copilot:/home/vscode/.copilot
