@@ -1,4 +1,7 @@
-use hatena_blog_api::{Client, Config, Entry, EntryParams};
+use hatena_blog_api::Client;
+use hatena_blog_api::Config;
+use hatena_blog_api::Entry;
+use hatena_blog_api::EntryParams;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
-use hatena_blog_api::{Client, Config};
+use hatena_blog_api::Client;
+use hatena_blog_api::Config;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

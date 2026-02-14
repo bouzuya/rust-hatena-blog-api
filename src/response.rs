@@ -1,9 +1,10 @@
-use crate::{Entry, EntryId, FixedDateTime};
+use crate::Entry;
+use crate::EntryId;
+use crate::FixedDateTime;
 use atom_syndication::Feed;
-use quick_xml::{
-    events::{attributes::Attributes, Event},
-    Reader,
-};
+use quick_xml::events::attributes::Attributes;
+use quick_xml::events::Event;
+use quick_xml::Reader;
 use reqwest::Url;
 use std::convert::TryFrom;
 use std::fmt::Display;
@@ -374,10 +375,13 @@ impl TryFrom<CollectionResponse> for (Option<String>, Vec<Entry>) {
 mod tests {
     use std::collections::BTreeMap;
 
-    use atom_syndication::{
-        extension::{Extension, ExtensionMap},
-        Category, Content, Link, Person, Text,
-    };
+    use atom_syndication::extension::Extension;
+    use atom_syndication::extension::ExtensionMap;
+    use atom_syndication::Category;
+    use atom_syndication::Content;
+    use atom_syndication::Link;
+    use atom_syndication::Person;
+    use atom_syndication::Text;
 
     use super::*;
 

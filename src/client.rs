@@ -1,11 +1,14 @@
 use crate::Config;
+use crate::CreateEntryResponse;
+use crate::DeleteEntryResponse;
 use crate::EntryId;
 use crate::EntryParams;
-use crate::{
-    CreateEntryResponse, DeleteEntryResponse, GetEntryResponse, ListCategoriesResponse,
-    ListEntriesResponse, UpdateEntryResponse,
-};
-use reqwest::{Method, StatusCode};
+use crate::GetEntryResponse;
+use crate::ListCategoriesResponse;
+use crate::ListEntriesResponse;
+use crate::UpdateEntryResponse;
+use reqwest::Method;
+use reqwest::StatusCode;
 use thiserror::Error;
 
 #[derive(Debug, Eq, PartialEq)]

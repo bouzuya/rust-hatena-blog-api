@@ -1,7 +1,12 @@
-use std::{convert::TryInto, env};
+use std::convert::TryInto;
+use std::env;
 
 use anyhow::Context as _;
-use hatena_blog_api::{Client, Config, Entry, EntryId, EntryParams};
+use hatena_blog_api::Client;
+use hatena_blog_api::Config;
+use hatena_blog_api::Entry;
+use hatena_blog_api::EntryId;
+use hatena_blog_api::EntryParams;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

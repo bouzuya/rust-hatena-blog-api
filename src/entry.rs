@@ -1,4 +1,5 @@
-use crate::{EntryId, FixedDateTime};
+use crate::EntryId;
+use crate::FixedDateTime;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Entry {

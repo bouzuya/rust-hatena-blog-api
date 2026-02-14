@@ -1,7 +1,9 @@
 use std::env;
 
 use anyhow::Context as _;
-use hatena_blog_api::{Client, Config, EntryId};
+use hatena_blog_api::Client;
+use hatena_blog_api::Config;
+use hatena_blog_api::EntryId;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
