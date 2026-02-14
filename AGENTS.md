@@ -16,7 +16,9 @@ cargo test -- --test-threads=1                 # Run tests single-threaded (need
 cargo run --features native-tls --example list_entries  # Run an example (requires env vars, see Config)
 ```
 
-No linter or formatter is configured; use `cargo fmt` and `cargo clippy` as needed.
+No linter or formatter is configured in CI. Use `cargo clippy` for linting.
+
+**IMPORTANT: Always run `cargo +nightly fmt` after editing code to apply formatting.**
 
 ## Architecture
 
