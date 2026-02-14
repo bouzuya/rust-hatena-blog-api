@@ -109,7 +109,7 @@ impl Client {
             config.base_url,
             config.hatena_id,
             config.blog_id,
-            page.map(|s| format!("?page={}", s))
+            page.map(|s| format!("?page={}", urlencoding::encode(s)))
                 .unwrap_or_else(|| "".to_string())
         )
     }
