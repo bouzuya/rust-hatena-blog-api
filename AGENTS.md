@@ -46,4 +46,4 @@ Key design decisions:
 - Newtype pattern for domain primitives (`EntryId`, `FixedDateTime`) with `FromStr`/`Display` implementations
 - Error types use `thiserror` derive macros
 - Tests are inline (`#[cfg(test)] mod test`) within each module, not in a separate `tests/` directory
-- All public types are re-exported from `lib.rs`
+- All public types are explicitly re-exported from `lib.rs` (do not use wildcard `*` re-exports)
