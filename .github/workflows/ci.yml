@@ -10,12 +10,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
       - uses: actions/cache@v2
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo +nightly fmt --check
+      - run: cargo clippy -- -D warnings
       - run: cargo test --verbose
       - run: cargo build --release --target ${{ matrix.target }} --verbose
     strategy:
