@@ -65,18 +65,24 @@ mod test {
         let hatena_blog_base_url = "hatena_blog_base_url1";
         let hatena_blog_id = "hatena_blog_id1";
         let hatena_id = "hatena_id1";
-        env::set_var("HATENA_API_KEY", hatena_api_key);
-        env::set_var("HATENA_BLOG_BASE_URL", hatena_blog_base_url);
-        env::set_var("HATENA_BLOG_ID", hatena_blog_id);
-        env::set_var("HATENA_ID", hatena_id);
-        assert_eq!(
-            Config::new_from_env().unwrap(),
-            Config {
-                api_key: hatena_api_key.to_string(),
-                base_url: hatena_blog_base_url.to_string(),
-                blog_id: hatena_blog_id.to_string(),
-                hatena_id: hatena_id.to_string(),
-            }
+        temp_env::with_vars(
+            [
+                ("HATENA_API_KEY", Some(hatena_api_key)),
+                ("HATENA_BLOG_BASE_URL", Some(hatena_blog_base_url)),
+                ("HATENA_BLOG_ID", Some(hatena_blog_id)),
+                ("HATENA_ID", Some(hatena_id)),
+            ],
+            || {
+                assert_eq!(
+                    Config::new_from_env().unwrap(),
+                    Config {
+                        api_key: hatena_api_key.to_string(),
+                        base_url: hatena_blog_base_url.to_string(),
+                        blog_id: hatena_blog_id.to_string(),
+                        hatena_id: hatena_id.to_string(),
+                    }
+                );
+            },
         );
     }
 }

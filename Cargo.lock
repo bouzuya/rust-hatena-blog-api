@@ -436,6 +436,7 @@ dependencies = [
  "quick-xml 0.39.0",
  "reqwest",
  "static_assertions",
+ "temp-env",
  "thiserror 2.0.18",
  "tokio",
  "urlencoding",
@@ -1471,6 +1472,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "temp-env"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96374855068f47402c3121c6eed88d29cb1de8f3ab27090e273e420bdabcf050"
+dependencies = [
+ "parking_lot",
 ]
 
 [[package]]

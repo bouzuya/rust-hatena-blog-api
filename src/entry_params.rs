@@ -3,7 +3,7 @@ pub struct EntryParams {
     author_name: String,
     title: String,
     content: String,
-    updated: String, // YYYY-MM-DDTHH:MM:SS
+    updated: String, // YYYY-MM-DDTHH:MM:SS or RFC 3339 date-time
     categories: Vec<String>,
     draft: bool,
 }
@@ -13,7 +13,7 @@ impl EntryParams {
         author_name: String,
         title: String,
         content: String,
-        updated: String, // YYYY-MM-DDTHH:MM:SS
+        updated: String, // YYYY-MM-DDTHH:MM:SS or RFC 3339 date-time
         categories: Vec<String>,
         draft: bool,
     ) -> Self {

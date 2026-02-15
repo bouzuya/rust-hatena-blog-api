@@ -15,6 +15,7 @@ urlencoding = "2"
 [dev-dependencies]
 anyhow = "1"
 static_assertions = "1.1.0"
+temp-env = "0.3"
 tokio = { version = "1", features = ["full"] }
 
 [features]
