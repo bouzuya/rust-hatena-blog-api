@@ -2,9 +2,9 @@ use crate::Entry;
 use crate::EntryId;
 use crate::FixedDateTime;
 use atom_syndication::Feed;
-use quick_xml::events::attributes::Attributes;
-use quick_xml::events::Event;
 use quick_xml::Reader;
+use quick_xml::events::Event;
+use quick_xml::events::attributes::Attributes;
 use reqwest::Url;
 use std::convert::TryFrom;
 use std::fmt::Display;
@@ -163,7 +163,7 @@ fn categories_from_reader(
                     if e.name().prefix().as_ref().map(|n| n.as_ref()) == Some(b"app")
                         && e.name().local_name().as_ref() == b"categories" =>
                 {
-                    break
+                    break;
                 }
                 Event::Eof => {
                     // TODO: eof
@@ -389,13 +389,13 @@ impl TryFrom<CollectionResponse> for (Option<String>, Vec<Entry>) {
 mod tests {
     use std::collections::BTreeMap;
 
-    use atom_syndication::extension::Extension;
-    use atom_syndication::extension::ExtensionMap;
     use atom_syndication::Category;
     use atom_syndication::Content;
     use atom_syndication::Link;
     use atom_syndication::Person;
     use atom_syndication::Text;
+    use atom_syndication::extension::Extension;
+    use atom_syndication::extension::ExtensionMap;
 
     use super::*;
 
