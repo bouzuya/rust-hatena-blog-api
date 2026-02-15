@@ -218,4 +218,303 @@ mod test {
     fn update_entry() {
         // See: examples/update_entry.rs
     }
+
+    const ENTRY_XML: &str = r#"<?xml version="1.0" encoding="utf-8"?>
+<entry xmlns="http://www.w3.org/2005/Atom"
+       xmlns:app="http://www.w3.org/2007/app">
+  <id>tag:blog.hatena.ne.jp,2013:blog-test_user-20000000000000-3000000000000000</id>
+  <link rel="edit" href="https://blog.hatena.ne.jp/test_user/test_blog/atom/entry/2500000000"/>
+  <link rel="alternate" type="text/html" href="http://test_blog.hatenablog.com/entry/2013/09/02/112823"/>
+  <author><name>test_user</name></author>
+  <title>記事タイトル</title>
+  <updated>2013-09-02T11:28:23+09:00</updated>
+  <published>2013-09-02T11:28:23+09:00</published>
+  <app:edited>2013-09-02T11:28:23+09:00</app:edited>
+  <summary type="text"> 記事本文 リスト1 リスト2 内容 </summary>
+  <content type="text/x-hatena-syntax">
+** 記事本文
+- リスト1
+- リスト2
+内容
+  </content>
+  <hatena:formatted-content type="text/html" xmlns:hatena="http://www.hatena.ne.jp/info/xmlns#">
+    <div class="section">
+    <h4>記事本文</h4>
+    <ul>
+    <li>リスト1</li>
+    <li>リスト2</li>
+    </ul><p>内容</p>
+    </div>
+  </hatena:formatted-content>
+  <category term="Scala" />
+  <category term="Perl" />
+  <app:control>
+    <app:draft>no</app:draft>
+  </app:control>
+</entry>"#;
+
+    const FEED_XML: &str = r#"<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:app="http://www.w3.org/2007/app">
+  <link rel="first" href="https://blog.hatena.ne.jp/test_user/test_blog/atom/entry" />
+  <link rel="next" href="https://blog.hatena.ne.jp/test_user/test_blog/atom/entry?page=1377584217" />
+  <title>ブログタイトル</title>
+  <link rel="alternate" href="http://test_blog.hatenablog.com/"/>
+  <updated>2013-08-27T15:17:06+09:00</updated>
+  <author>
+    <name>test_user</name>
+  </author>
+  <generator uri="http://blog.hatena.ne.jp/" version="100000000">Hatena::Blog</generator>
+  <id>hatenablog://blog/2000000000000</id>
+  <entry>
+    <id>tag:blog.hatena.ne.jp,2013:blog-test_user-20000000000000-3000000000000000</id>
+    <link rel="edit" href="https://blog.hatena.ne.jp/test_user/test_blog/atom/entry/2500000000"/>
+    <link rel="alternate" type="text/html" href="http://test_blog.hatenablog.com/entry/2013/09/02/112823"/>
+    <author><name>test_user</name></author>
+    <title>記事タイトル</title>
+    <updated>2013-09-02T11:28:23+09:00</updated>
+    <published>2013-09-02T11:28:23+09:00</published>
+    <app:edited>2013-09-02T11:28:23+09:00</app:edited>
+    <summary type="text"> 記事本文 リスト1 リスト2 内容 </summary>
+    <content type="text/x-hatena-syntax">
+** 記事本文
+- リスト1
+- リスト2
+内容
+    </content>
+    <hatena:formatted-content type="text/html" xmlns:hatena="http://www.hatena.ne.jp/info/xmlns#">
+      <div class="section">
+      <h4>記事本文</h4>
+      <ul>
+      <li>リスト1</li>
+      <li>リスト2</li>
+      </ul><p>内容</p>
+      </div>
+    </hatena:formatted-content>
+    <category term="Scala" />
+    <category term="Perl" />
+    <app:control>
+      <app:draft>no</app:draft>
+    </app:control>
+  </entry>
+</feed>"#;
+
+    const CATEGORY_DOCUMENT_XML: &str = r#"<?xml version="1.0" encoding="utf-8"?>
+<app:categories
+    xmlns:app="http://www.w3.org/2007/app"
+    xmlns:atom="http://www.w3.org/2005/Atom"
+    fixed="no">
+  <atom:category term="Perl" />
+  <atom:category term="Scala" />
+</app:categories>"#;
+
+    fn mock_config(server_url: &str) -> Config {
+        Config::new("test_user", Some(server_url), "test_blog", "test_api_key")
+    }
+
+    #[tokio::test]
+    async fn create_entry_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/test_user/test_blog/atom/entry")
+            .match_header(
+                "authorization",
+                mockito::Matcher::Regex("Basic .+".to_string()),
+            )
+            .with_status(201)
+            .with_body(ENTRY_XML)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let params = EntryParams::new(
+            "test_user".to_string(),
+            "記事タイトル".to_string(),
+            "** 記事本文".to_string(),
+            "2013-09-02T11:28:23+09:00".to_string(),
+            vec!["Scala".to_string()],
+            false,
+        );
+        let response = client.create_entry(params).await?;
+        assert_eq!(response.to_string(), ENTRY_XML);
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn delete_entry_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("DELETE", "/test_user/test_blog/atom/entry/2500000000")
+            .match_header(
+                "authorization",
+                mockito::Matcher::Regex("Basic .+".to_string()),
+            )
+            .with_status(200)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let entry_id = "2500000000".parse::<EntryId>()?;
+        let response = client.delete_entry(&entry_id).await?;
+        assert_eq!(response.to_string(), "");
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_entry_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/test_user/test_blog/atom/entry/2500000000")
+            .match_header(
+                "authorization",
+                mockito::Matcher::Regex("Basic .+".to_string()),
+            )
+            .with_status(200)
+            .with_body(ENTRY_XML)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let entry_id = "2500000000".parse::<EntryId>()?;
+        let response = client.get_entry(&entry_id).await?;
+        assert_eq!(response.to_string(), ENTRY_XML);
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn list_categories_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/test_user/test_blog/atom/category")
+            .match_header(
+                "authorization",
+                mockito::Matcher::Regex("Basic .+".to_string()),
+            )
+            .with_status(200)
+            .with_body(CATEGORY_DOCUMENT_XML)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let response = client.list_categories().await?;
+        assert_eq!(response.to_string(), CATEGORY_DOCUMENT_XML);
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn list_entries_in_page_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/test_user/test_blog/atom/entry")
+            .match_header(
+                "authorization",
+                mockito::Matcher::Regex("Basic .+".to_string()),
+            )
+            .with_status(200)
+            .with_body(FEED_XML)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let response = client.list_entries_in_page(None).await?;
+        assert_eq!(response.to_string(), FEED_XML);
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn list_entries_in_page_with_page_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/test_user/test_blog/atom/entry?page=1377584217")
+            .match_header(
+                "authorization",
+                mockito::Matcher::Regex("Basic .+".to_string()),
+            )
+            .with_status(200)
+            .with_body(FEED_XML)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let response = client.list_entries_in_page(Some("1377584217")).await?;
+        assert_eq!(response.to_string(), FEED_XML);
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn update_entry_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("PUT", "/test_user/test_blog/atom/entry/2500000000")
+            .match_header(
+                "authorization",
+                mockito::Matcher::Regex("Basic .+".to_string()),
+            )
+            .with_status(200)
+            .with_body(ENTRY_XML)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let entry_id = "2500000000".parse::<EntryId>()?;
+        let params = EntryParams::new(
+            "test_user".to_string(),
+            "記事タイトル".to_string(),
+            "** 記事本文".to_string(),
+            "2013-09-02T11:28:23+09:00".to_string(),
+            vec!["Scala".to_string()],
+            false,
+        );
+        let response = client.update_entry(&entry_id, params).await?;
+        assert_eq!(response.to_string(), ENTRY_XML);
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_entry_unauthorized_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/test_user/test_blog/atom/entry/2500000000")
+            .with_status(401)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let entry_id = "2500000000".parse::<EntryId>()?;
+        let result = client.get_entry(&entry_id).await;
+        assert!(matches!(result, Err(ClientError::Unauthorized)));
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_entry_not_found_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/test_user/test_blog/atom/entry/2500000000")
+            .with_status(404)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let entry_id = "2500000000".parse::<EntryId>()?;
+        let result = client.get_entry(&entry_id).await;
+        assert!(matches!(result, Err(ClientError::NotFound)));
+        mock.assert_async().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_entry_internal_server_error_with_mock() -> anyhow::Result<()> {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/test_user/test_blog/atom/entry/2500000000")
+            .with_status(500)
+            .create_async()
+            .await;
+        let client = Client::new(&mock_config(&server.url()));
+        let entry_id = "2500000000".parse::<EntryId>()?;
+        let result = client.get_entry(&entry_id).await;
+        assert!(matches!(result, Err(ClientError::InternalServerError)));
+        mock.assert_async().await;
+        Ok(())
+    }
 }
