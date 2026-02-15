@@ -5,7 +5,9 @@ pub struct EntryId(String);
 
 #[derive(Debug, Eq, Error, PartialEq)]
 #[error("entry id parse error")]
-pub struct EntryIdParseError;
+pub struct EntryIdParseError {
+    _private: (),
+}
 
 impl std::fmt::Display for EntryId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -18,7 +20,7 @@ impl std::str::FromStr for EntryId {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.is_empty() {
-            return Err(EntryIdParseError);
+            return Err(EntryIdParseError { _private: () });
         }
         Ok(Self(s.to_string()))
     }
@@ -40,6 +42,9 @@ mod tests {
             EntryId::from_str("2500000000").map(|id| id.to_string()),
             Ok("2500000000".to_string())
         );
-        assert_eq!("".parse::<EntryId>(), Err(EntryIdParseError));
+        assert_eq!(
+            "".parse::<EntryId>(),
+            Err(EntryIdParseError { _private: () })
+        );
     }
 }

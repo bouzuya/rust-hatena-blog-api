@@ -26,7 +26,9 @@ impl std::fmt::Display for FixedDateTime {
 
 #[derive(Debug, Eq, Error, PartialEq)]
 #[error("fixed date time parse error")]
-pub struct FixedDateTimeParseError;
+pub struct FixedDateTimeParseError {
+    _private: (),
+}
 
 impl std::str::FromStr for FixedDateTime {
     type Err = FixedDateTimeParseError;
@@ -34,7 +36,7 @@ impl std::str::FromStr for FixedDateTime {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         DateTime::<FixedOffset>::parse_from_rfc3339(s)
             .map(FixedDateTime)
-            .map_err(|_| FixedDateTimeParseError)
+            .map_err(|_| FixedDateTimeParseError { _private: () })
     }
 }
 

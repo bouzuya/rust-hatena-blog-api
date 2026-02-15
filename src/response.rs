@@ -22,11 +22,15 @@ pub type PartialList = (Option<String>, Vec<EntryId>);
 
 #[derive(Debug, Eq, Error, PartialEq)]
 #[error("parse entry error")]
-pub struct ParseEntryError;
+pub struct ParseEntryError {
+    _private: (),
+}
 
 #[derive(Debug, Eq, Error, PartialEq)]
 #[error("parse category error")]
-pub struct ParseCategoryError;
+pub struct ParseCategoryError {
+    _private: (),
+}
 
 fn get_draft(entry: &atom_syndication::Entry) -> bool {
     entry
@@ -80,7 +84,7 @@ fn to_entry(entry: atom_syndication::Entry) -> Result<Entry, ParseEntryError> {
         author_name: entry
             .authors
             .first()
-            .ok_or(ParseEntryError)?
+            .ok_or(ParseEntryError { _private: () })?
             .name
             .to_string(),
         categories: entry
@@ -91,18 +95,22 @@ fn to_entry(entry: atom_syndication::Entry) -> Result<Entry, ParseEntryError> {
         content: entry
             .content
             .clone()
-            .ok_or(ParseEntryError)?
+            .ok_or(ParseEntryError { _private: () })?
             .value
-            .ok_or(ParseEntryError)?,
+            .ok_or(ParseEntryError { _private: () })?,
         draft: get_draft(&entry),
-        edited: FixedDateTime::from_str(get_edited(&entry).ok_or(ParseEntryError)?.as_str())
-            .map_err(|_| ParseEntryError)?,
-        edit_url: get_edit_url(&entry).ok_or(ParseEntryError)?,
-        id: get_id(&entry).ok_or(ParseEntryError)?,
-        published: FixedDateTime::from(entry.published.ok_or(ParseEntryError)?),
+        edited: FixedDateTime::from_str(
+            get_edited(&entry)
+                .ok_or(ParseEntryError { _private: () })?
+                .as_str(),
+        )
+        .map_err(|_| ParseEntryError { _private: () })?,
+        edit_url: get_edit_url(&entry).ok_or(ParseEntryError { _private: () })?,
+        id: get_id(&entry).ok_or(ParseEntryError { _private: () })?,
+        published: FixedDateTime::from(entry.published.ok_or(ParseEntryError { _private: () })?),
         title: entry.title.to_string(),
         updated: FixedDateTime::from(entry.updated),
-        url: get_url(&entry).ok_or(ParseEntryError)?,
+        url: get_url(&entry).ok_or(ParseEntryError { _private: () })?,
     })
 }
 
@@ -110,7 +118,7 @@ fn first_entry(feed: &Feed) -> Result<Entry, ParseEntryError> {
     feed.entries()
         .first()
         .cloned()
-        .ok_or(ParseEntryError)
+        .ok_or(ParseEntryError { _private: () })
         .and_then(to_entry)
 }
 
@@ -120,11 +128,11 @@ fn from_entry_xml(body: &str) -> Result<Feed, ParseEntryError> {
         body.strip_prefix(r#"<?xml version="1.0" encoding="utf-8"?>"#)
             .unwrap_or(body)
     );
-    Feed::from_str(xml.as_str()).map_err(|_| ParseEntryError)
+    Feed::from_str(xml.as_str()).map_err(|_| ParseEntryError { _private: () })
 }
 
 fn from_feed_xml(body: &str) -> Result<Feed, ParseEntryError> {
-    Feed::from_str(body).map_err(|_| ParseEntryError)
+    Feed::from_str(body).map_err(|_| ParseEntryError { _private: () })
 }
 
 fn categories_from_reader(
@@ -141,12 +149,12 @@ fn categories_from_reader(
                         && e.name().local_name().as_ref() == b"category" =>
                 {
                     for attr in e.attributes() {
-                        let attr = attr.map_err(|_| ParseCategoryError)?;
+                        let attr = attr.map_err(|_| ParseCategoryError { _private: () })?;
                         if attr.key.local_name().as_ref() == b"term" {
-                            let value = attr.value; // .map_err(|_| ParseCategoryError)?;
+                            let value = attr.value; // .map_err(|_| ParseCategoryError { _private: () })?;
                             categories.push(
                                 String::from_utf8(value.to_vec())
-                                    .map_err(|_| ParseCategoryError)?,
+                                    .map_err(|_| ParseCategoryError { _private: () })?,
                             );
                         }
                     }
@@ -159,13 +167,13 @@ fn categories_from_reader(
                 }
                 Event::Eof => {
                     // TODO: eof
-                    return Err(ParseCategoryError);
+                    return Err(ParseCategoryError { _private: () });
                 }
                 _ => {}
             },
             Err(_) => {
                 // TODO: unknown
-                return Err(ParseCategoryError);
+                return Err(ParseCategoryError { _private: () });
             }
         }
         buf.clear();
@@ -192,7 +200,7 @@ fn from_category_document_xml(xml: &str) -> Result<Vec<String>, ParseCategoryErr
                         }
                         Some(_) => {
                             // TODO: too many <app:categories>
-                            return Err(ParseCategoryError);
+                            return Err(ParseCategoryError { _private: () });
                         }
                     }
                 }
@@ -203,11 +211,11 @@ fn from_category_document_xml(xml: &str) -> Result<Vec<String>, ParseCategoryErr
                     match categories {
                         None => {
                             // TODO: <app:categories href="{CATEGORY_DOCUMENT}" /> is not supported
-                            return Err(ParseCategoryError);
+                            return Err(ParseCategoryError { _private: () });
                         }
                         Some(_) => {
                             // TODO: too many <app:categories>
-                            return Err(ParseCategoryError);
+                            return Err(ParseCategoryError { _private: () });
                         }
                     }
                 }
@@ -218,13 +226,13 @@ fn from_category_document_xml(xml: &str) -> Result<Vec<String>, ParseCategoryErr
             },
             Err(_) => {
                 // TODO: unknown
-                return Err(ParseCategoryError);
+                return Err(ParseCategoryError { _private: () });
             }
         }
         buf.clear();
     }
     // TODO: no <app:categories>
-    categories.ok_or(ParseCategoryError)
+    categories.ok_or(ParseCategoryError { _private: () })
 }
 
 fn partial_list(feed: &Feed) -> Result<(Option<String>, Vec<Entry>), ParseEntryError> {
@@ -327,7 +335,8 @@ impl TryFrom<CategoryDocumentResponse> for Vec<String> {
     type Error = ParseEntryError;
 
     fn try_from(response: CategoryDocumentResponse) -> Result<Self, Self::Error> {
-        from_category_document_xml(response.body.as_str()).map_err(|_| ParseEntryError)
+        from_category_document_xml(response.body.as_str())
+            .map_err(|_| ParseEntryError { _private: () })
     }
 }
 

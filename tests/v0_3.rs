@@ -11,7 +11,7 @@ fn client_does_not_implement_eq() {
 #[test]
 fn parse_entry_error_is_exported() {
     use hatena_blog_api::ParseEntryError;
-    let _error = ParseEntryError;
+    fn _assert(_: ParseEntryError) {}
 }
 
 // BREAKING CHANGE (v0.3): `EntryId` no longer accepts empty strings.
