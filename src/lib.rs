@@ -26,6 +26,6 @@ pub use self::response::ListCategoriesResponse;
 pub use self::response::ListEntriesResponse;
 pub use self::response::MemberResponse;
 pub use self::response::ParseCategoryError;
-pub use self::response::ParseEntry;
+pub use self::response::ParseEntryError;
 pub use self::response::PartialList;
 pub use self::response::UpdateEntryResponse;

@@ -22,7 +22,7 @@ pub type PartialList = (Option<String>, Vec<EntryId>);
 
 #[derive(Debug, Eq, Error, PartialEq)]
 #[error("parse entry error")]
-pub struct ParseEntry;
+pub struct ParseEntryError;
 
 #[derive(Debug, Eq, Error, PartialEq)]
 #[error("parse category error")]
@@ -75,9 +75,14 @@ fn get_id(entry: &atom_syndication::Entry) -> Option<EntryId> {
         .and_then(|id| id.parse().ok())
 }
 
-fn to_entry(entry: atom_syndication::Entry) -> Result<Entry, ParseEntry> {
+fn to_entry(entry: atom_syndication::Entry) -> Result<Entry, ParseEntryError> {
     Ok(Entry {
-        author_name: entry.authors.first().ok_or(ParseEntry)?.name.to_string(),
+        author_name: entry
+            .authors
+            .first()
+            .ok_or(ParseEntryError)?
+            .name
+            .to_string(),
         categories: entry
             .categories
             .iter()
@@ -86,40 +91,40 @@ fn to_entry(entry: atom_syndication::Entry) -> Result<Entry, ParseEntry> {
         content: entry
             .content
             .clone()
-            .ok_or(ParseEntry)?
+            .ok_or(ParseEntryError)?
             .value
-            .ok_or(ParseEntry)?,
+            .ok_or(ParseEntryError)?,
         draft: get_draft(&entry),
-        edited: FixedDateTime::from_str(get_edited(&entry).ok_or(ParseEntry)?.as_str())
-            .map_err(|_| ParseEntry)?,
-        edit_url: get_edit_url(&entry).ok_or(ParseEntry)?,
-        id: get_id(&entry).ok_or(ParseEntry)?,
-        published: FixedDateTime::from(entry.published.ok_or(ParseEntry)?),
+        edited: FixedDateTime::from_str(get_edited(&entry).ok_or(ParseEntryError)?.as_str())
+            .map_err(|_| ParseEntryError)?,
+        edit_url: get_edit_url(&entry).ok_or(ParseEntryError)?,
+        id: get_id(&entry).ok_or(ParseEntryError)?,
+        published: FixedDateTime::from(entry.published.ok_or(ParseEntryError)?),
         title: entry.title.to_string(),
         updated: FixedDateTime::from(entry.updated),
-        url: get_url(&entry).ok_or(ParseEntry)?,
+        url: get_url(&entry).ok_or(ParseEntryError)?,
     })
 }
 
-fn first_entry(feed: &Feed) -> Result<Entry, ParseEntry> {
+fn first_entry(feed: &Feed) -> Result<Entry, ParseEntryError> {
     feed.entries()
         .first()
         .cloned()
-        .ok_or(ParseEntry)
+        .ok_or(ParseEntryError)
         .and_then(to_entry)
 }
 
-fn from_entry_xml(body: &str) -> Result<Feed, ParseEntry> {
+fn from_entry_xml(body: &str) -> Result<Feed, ParseEntryError> {
     let xml = format!(
         "<feed>{}</feed>",
         body.strip_prefix(r#"<?xml version="1.0" encoding="utf-8"?>"#)
             .unwrap_or(body)
     );
-    Feed::from_str(xml.as_str()).map_err(|_| ParseEntry)
+    Feed::from_str(xml.as_str()).map_err(|_| ParseEntryError)
 }
 
-fn from_feed_xml(body: &str) -> Result<Feed, ParseEntry> {
-    Feed::from_str(body).map_err(|_| ParseEntry)
+fn from_feed_xml(body: &str) -> Result<Feed, ParseEntryError> {
+    Feed::from_str(body).map_err(|_| ParseEntryError)
 }
 
 fn categories_from_reader(
@@ -222,7 +227,7 @@ fn from_category_document_xml(xml: &str) -> Result<Vec<String>, ParseCategoryErr
     categories.ok_or(ParseCategoryError)
 }
 
-fn partial_list(feed: &Feed) -> Result<(Option<String>, Vec<Entry>), ParseEntry> {
+fn partial_list(feed: &Feed) -> Result<(Option<String>, Vec<Entry>), ParseEntryError> {
     Ok((
         feed.links
             .iter()
@@ -238,7 +243,7 @@ fn partial_list(feed: &Feed) -> Result<(Option<String>, Vec<Entry>), ParseEntry>
             .iter()
             .cloned()
             .map(to_entry)
-            .collect::<Result<Vec<Entry>, ParseEntry>>()?,
+            .collect::<Result<Vec<Entry>, ParseEntryError>>()?,
     ))
 }
 
@@ -266,7 +271,7 @@ impl From<MemberResponse> for String {
 }
 
 impl TryFrom<MemberResponse> for Entry {
-    type Error = ParseEntry;
+    type Error = ParseEntryError;
 
     fn try_from(response: MemberResponse) -> Result<Self, Self::Error> {
         let feed = from_entry_xml(response.body.as_str())?;
@@ -319,10 +324,10 @@ impl From<CategoryDocumentResponse> for String {
 }
 
 impl TryFrom<CategoryDocumentResponse> for Vec<String> {
-    type Error = ParseEntry;
+    type Error = ParseEntryError;
 
     fn try_from(response: CategoryDocumentResponse) -> Result<Self, Self::Error> {
-        from_category_document_xml(response.body.as_str()).map_err(|_| ParseEntry)
+        from_category_document_xml(response.body.as_str()).map_err(|_| ParseEntryError)
     }
 }
 
@@ -350,7 +355,7 @@ impl From<CollectionResponse> for String {
 }
 
 impl TryFrom<CollectionResponse> for PartialList {
-    type Error = ParseEntry;
+    type Error = ParseEntryError;
 
     fn try_from(response: CollectionResponse) -> Result<Self, Self::Error> {
         let feed = from_feed_xml(response.body.as_str())?;
@@ -363,7 +368,7 @@ impl TryFrom<CollectionResponse> for PartialList {
 }
 
 impl TryFrom<CollectionResponse> for (Option<String>, Vec<Entry>) {
-    type Error = ParseEntry;
+    type Error = ParseEntryError;
 
     fn try_from(response: CollectionResponse) -> Result<Self, Self::Error> {
         let feed = from_feed_xml(response.body.as_str())?;
