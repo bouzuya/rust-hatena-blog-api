@@ -17,6 +17,9 @@ impl std::str::FromStr for EntryId {
     type Err = EntryIdParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.is_empty() {
+            return Err(EntryIdParseError);
+        }
         Ok(Self(s.to_string()))
     }
 }
@@ -37,5 +40,6 @@ mod tests {
             EntryId::from_str("2500000000").map(|id| id.to_string()),
             Ok("2500000000".to_string())
         );
+        assert_eq!("".parse::<EntryId>(), Err(EntryIdParseError));
     }
 }
